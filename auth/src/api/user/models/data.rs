@@ -11,4 +11,3 @@ pub struct User {
     pub password: String,
     pub avatar: String,
 }
-
