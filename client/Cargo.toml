@@ -1,7 +1,0 @@
-[package]
-name = "client"
-version = "0.1.0"
-edition = "2024"
-license = "Creative Commons BY-NC 4.0"
-
-[dependencies]
