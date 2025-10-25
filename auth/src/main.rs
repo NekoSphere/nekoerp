@@ -1,5 +1,6 @@
-mod api;
+//use auth::app;
 
-fn main() {
-    println!("Hello, world!");
+#[tokio::main]
+async fn main() {
+    //app().await;
 }
