@@ -95,6 +95,7 @@ dependencies = [
  "bincode",
  "chrono",
  "colorful",
+ "dotenv",
  "hex",
  "kenzu 0.1.7",
  "nekoprint",
@@ -329,6 +330,12 @@ checksum = "95249b50c6c185bee49034bcb378a49dc2b5dff0be90ff6616d31d64febab05d"
 dependencies = [
  "litrs",
 ]
+
+[[package]]
+name = "dotenv"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
 name = "either"
@@ -1197,6 +1204,7 @@ checksum = "2f87b8aa10b915a06587d0dec516c282ff295b475d94abf425d62b57710070a2"
 dependencies = [
  "getrandom 0.3.4",
  "js-sys",
+ "serde",
  "wasm-bindgen",
 ]
 
@@ -1462,9 +1470,9 @@ checksum = "b97154e67e32c85465826e8bcc1c59429aaaf107c1e4a9e53c8d8ccd5eff88d0"
 
 [[package]]
 name = "zipher"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2e61692cb64beaf5c3ad1b08d9856c60db788f649bbf7f040d7110949bd05b6"
+checksum = "b86ec35dc56715a0c94ac017579ae825e6a2f31a5a07f93280752193e3fae0b4"
 dependencies = [
  "aes-gcm-siv",
  "argon2",

@@ -6,7 +6,7 @@ pub trait Repository {
     async fn delete(&self);
     async fn update(&self);
     async fn find_by_token(&self);
-    async fn find_by_id(&self);
+    async fn find_by_id(&self, uuid: String) -> Result<Option<User>, ApplicationError>;
     async fn find_by_serial_id(&self);
     async fn find_by_email<T: AsRef<str> + Send + Sync>(
         &self,

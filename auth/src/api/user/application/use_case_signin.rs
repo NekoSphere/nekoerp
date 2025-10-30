@@ -11,13 +11,25 @@ where
     let UserAuth { email, password } = payload;
     let email: String = UserAuthEmail::new(&email)?.into();
     let password: String = UserAuthPassword::new(&password)?.into();
+
     let UseCase {
-        cache,
         repository,
         service: _,
     } = &*usecase;
-    cache.find_by_email(&email).await;
-    repository.find_by_email(email).await;
 
-    Ok(())
+    if let Some(user) = repository.find_by_email(&email).await? {
+        user.print().success().await;
+        let hash = user.password;
+        let secret = env::var("ARGON_SECRET_KEY").expect("ARGON_SECRET_KEY must be provided");
+        Argon::new()
+            .secret(ArgonSecret::new(secret)?)
+            .password(ArgonPassword::new(password)?)
+            .hash(ArgonHash::new(hash)?)
+            .verify()
+            .map_err(|err| ApplicationError::Internal(format!("Argon2 verify failed {err}")))?;
+
+        return Ok((StatusCode::OK, user.token));
+    }
+
+    Err(ApplicationError::WrongEmailOrPassword)
 }

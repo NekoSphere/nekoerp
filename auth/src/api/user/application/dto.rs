@@ -9,14 +9,14 @@ pub trait RepoBounds: Repository + Debug + Default + Send + Sync + 'static {}
 impl<T> RepoBounds for T where T: Repository + Debug + Default + Send + Sync + 'static {}
 pub trait ServiceBounds: Debug + Default + Send + Sync + 'static {}
 impl<T> ServiceBounds for T where T: Debug + Default + Send + Sync + 'static {}
-pub trait AesBounds: Debug + Default + Send + Sync + 'static {}
-impl<T> AesBounds for T where T: Debug + Default + Send + Sync + 'static {}
 
 #[derive(Debug)]
 pub enum ApplicationError {
     Validation(String),
     Internal(String),
     UserExists,
+    WrongEmailOrPassword,
+    UserNotFound,
 }
 
 impl From<String> for ApplicationError {
@@ -35,10 +35,17 @@ impl IntoResponse for ApplicationError {
         let (status, msg) = match self {
             ApplicationError::Validation(msg) => (StatusCode::BAD_REQUEST, msg),
             ApplicationError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            ApplicationError::WrongEmailOrPassword => (
+                StatusCode::BAD_REQUEST,
+                "User email or password incorrect".to_string(),
+            ),
             ApplicationError::UserExists => (
                 StatusCode::BAD_REQUEST,
                 "User email exists in app".to_string(),
             ),
+            ApplicationError::UserNotFound => {
+                (StatusCode::NOT_FOUND, "User not found in app".to_string())
+            }
         };
 
         let body = Json(ErrorBody { error: msg });

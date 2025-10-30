@@ -11,14 +11,7 @@ pub struct Policy {
 #[derive(Builder, NekoPrint, Debug, Clone, Serialize, Deserialize)]
 #[transporter(async fn trans() { transporter(message).await; })]
 pub struct Policies {
-    pub crm: Policy,
-    pub inventory: Policy,
-    pub billing: Policy,
-    pub chat: Policy,
-    pub kanban: Policy,
+    pub invetory: Policy,
     pub finance: Policy,
-    pub hr: Policy,
-    pub purchasing: Policy,
-    pub sales: Policy,
-    pub manage_users: Policy,
+    pub chat: Policy,
 }

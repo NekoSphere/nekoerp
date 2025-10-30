@@ -1,0 +1,299 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nano
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: nano
+type: Opaque
+stringData:
+  POSTGRES_DB: appdb
+  POSTGRES_USER: user
+  POSTGRES_PASSWORD: "troque_essa_senha_com_segurança"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: nano
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+  namespace: nano
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-sa
+  namespace: nano
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nano-basic-role
+  namespace: nano
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+      - services
+      - secrets
+      - configmaps
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bind-postgres-sa
+  namespace: nano
+subjects:
+  - kind: ServiceAccount
+    name: postgres-sa
+    namespace: nano
+roleRef:
+  kind: Role
+  name: nano-basic-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: nano
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      serviceAccountName: postgres-sa
+      initContainers:
+        - name: init-chown
+          image: busybox:1.36
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data || true"]
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "800Mi"
+              cpu: "500m"
+            limits:
+              memory: "1100Mi"
+              cpu: "1000m"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "user"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "user"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: nano
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+  namespace: nano
+data:
+  nginx.conf: |
+    user  nginx;
+    worker_processes  1;
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+    events {
+      worker_connections  1024;
+    }
+    http {
+      include       mime.types;
+      default_type  application/octet-stream;
+      sendfile        on;
+      keepalive_timeout  65;
+      server {
+        listen       80;
+        server_name  localhost;
+        location / {
+          root   /usr/share/nginx/html;
+          index  index.html index.htm;
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: nano
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.24-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "50m"
+            limits:
+              memory: "200Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: nano
+spec:
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      nodePort: 30080
+  type: NodePort
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrator
+  namespace: nano
+spec:
+  template:
+    metadata:
+      labels:
+        job: db-migrator
+    spec:
+      serviceAccountName: postgres-sa
+      restartPo

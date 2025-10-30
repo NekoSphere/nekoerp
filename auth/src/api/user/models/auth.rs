@@ -1,6 +1,6 @@
 pub use super::prelude::*;
 
-#[derive(Builder, NekoPrint, Debug, Clone)]
+#[derive(Builder, NekoPrint, Debug, Clone, Serialize, Deserialize)]
 #[transporter(async fn trans() { transporter(message).await; })]
 pub struct UserAuth {
     #[opt(
