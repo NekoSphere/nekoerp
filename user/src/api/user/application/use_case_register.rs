@@ -40,7 +40,7 @@ where
         .password(ArgonPassword::new(password)?)
         .encrypt()
         .map_err(|err| ApplicationError::Internal(format!("Argon2 encrypt failed {err}")))?;
-
+    
     let mut user = User::new()
         .email(UserEmail(email))
         .password(UserPassword(password))
