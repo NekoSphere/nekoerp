@@ -34,9 +34,8 @@ async fn test_signin_success() {
         .password(ArgonPassword("Exemplo@123".into()))
         .encrypt()
         .expect("argon encrypt must be success");
-    let im = InMemoryReposiroty::new().data(InMemoryReposirotyData(vec![
-        User::new().password(UserPassword(hash)),
-    ]));
+    let im = InMemoryReposiroty::new()
+        .data(InMemoryReposirotyData::new(vec![User::new().password(UserPassword(hash))]).unwrap());
     let usecase: UseCase<InMemoryReposiroty, InMemoryReposiroty> =
         UseCase::new().repository(UseCaseRepository(im));
 

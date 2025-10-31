@@ -2,6 +2,7 @@ pub mod auth;
 pub mod create;
 pub mod data;
 pub mod import;
+pub mod modules;
 pub mod opt;
 pub mod policy;
 pub mod prelude;

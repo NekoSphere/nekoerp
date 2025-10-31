@@ -37,4 +37,5 @@ pub struct User {
     pub avatar: String,
     pub token: String,
     pub policies: Policies,
+    pub modules: (),
 }

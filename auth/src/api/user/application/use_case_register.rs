@@ -49,8 +49,26 @@ where
         .policies(UserPolicies(policies))
         .birthday(UserBirthday(birthday));
 
-    create_token(&mut user).await?;
-    repository.create(&user).await?;
+    let uuid = user.uuid.to_string();
+    let key = env::var("AES_SECRET_KEY").expect("AES_SECRET_KEY must be provided");
+    let mut aes = AesGcmSiv::new()
+        .key(AesGcmSivKey::new(key)?)
+        .target(AesGcmSivTarget::new(uuid)?);
+    let nonce = aes.nonce.clone();
+    let token = aes
+        .encrypt()
+        .map_err(|err| ApplicationError::Internal(format!("Aes encrypt failed {err}")))?;
+    let token: String = UserToken::new(format!("{token} {nonce}"))?.into();
 
-    Ok((StatusCode::CREATED, user.token))
+    user.mut_token(UserToken::new(&token)?);
+    let token = user.token.clone();
+
+    if repository.count().await? == 0 {
+        let user = user.policies(UserPolicies::new(Policies::first_user_policies())?);
+        repository.create(&user).await?;
+    } else {
+        repository.create(&user).await?;
+    }
+
+    Ok((StatusCode::CREATED, token))
 }
