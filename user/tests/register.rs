@@ -1,4 +1,6 @@
-use auth::{api::prelude::*, app};
+use std::collections::HashMap;
+
+use auth::*;
 use axum::{
     body::{Body, to_bytes},
     http::{Request, header},
@@ -19,7 +21,7 @@ async fn test_register_success() {
 
     let request = Request::builder()
         .method("POST")
-        .uri("/register")
+        .uri(REGISTER_NEW_USER_PATH)
         .header("Content-Type", "application/json")
         .body(Body::from(payload.to_string()))
         .unwrap();
@@ -44,7 +46,7 @@ async fn test_register_user_exists() {
 
     let request = Request::builder()
         .method("POST")
-        .uri("/register")
+        .uri(REGISTER_NEW_USER_PATH)
         .header("Content-Type", "application/json")
         .body(Body::from(payload.to_string()))
         .unwrap();
@@ -67,7 +69,7 @@ async fn test_register_first_user_success() {
 
     let request = Request::builder()
         .method("POST")
-        .uri("/register")
+        .uri(REGISTER_FIRST_USER_PATH)
         .header("Content-Type", "application/json")
         .body(Body::from(payload.to_string()))
         .unwrap();
@@ -81,7 +83,7 @@ async fn test_register_first_user_success() {
     println!("register raw body: {}", token);
     let request = Request::builder()
         .method("POST")
-        .uri("/token")
+        .uri(TOKEN_PATH)
         .header(header::AUTHORIZATION, token)
         .header("Content-Type", "application/json")
         .body(Body::empty())
@@ -92,6 +94,20 @@ async fn test_register_first_user_success() {
     let bytes = to_bytes(response.into_body(), 60 * 1024)
         .await
         .expect("limit response overflow");
-    let body = String::from_utf8(bytes.to_vec()).unwrap_or_else(|_| "<non-utf8-body>".to_string());
-    println!("🔑 token raw body: {}", body);
+    let user: UserReponse = serde_json::from_slice(&bytes).expect("invalid json response");
+    println!("👤 Registered UserReponse: {user:#?}");
+    let policies: HashMap<&str, Policy> = user.policies.into();
+    for (
+        _,
+        Policy {
+            read,
+            write,
+            delete,
+        },
+    ) in policies
+    {
+        assert!(read);
+        assert!(write);
+        assert!(delete);
+    }
 }

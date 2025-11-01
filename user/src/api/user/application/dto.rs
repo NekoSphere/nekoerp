@@ -17,6 +17,7 @@ pub enum ApplicationError {
     UserExists,
     WrongEmailOrPassword,
     UserNotFound,
+    FirstUserExists,
 }
 
 impl From<String> for ApplicationError {
@@ -35,6 +36,10 @@ impl IntoResponse for ApplicationError {
         let (status, msg) = match self {
             ApplicationError::Validation(msg) => (StatusCode::BAD_REQUEST, msg),
             ApplicationError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            ApplicationError::FirstUserExists => (
+                StatusCode::BAD_REQUEST,
+                "First user already exists in app".to_string(),
+            ),
             ApplicationError::WrongEmailOrPassword => (
                 StatusCode::BAD_REQUEST,
                 "User email or password incorrect".to_string(),

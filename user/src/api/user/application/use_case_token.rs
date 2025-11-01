@@ -39,8 +39,8 @@ where
         .to_string();
 
     if let Some(user) = repository.find_by_id(uuid).await? {
+        let user: UserReponse = user.into();
         return Ok((StatusCode::OK, Json(user)));
     }
-
     Err(ApplicationError::UserNotFound)
 }

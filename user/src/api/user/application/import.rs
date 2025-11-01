@@ -10,3 +10,5 @@ pub use std::env;
 pub use std::fmt::Debug;
 pub use std::sync::Arc;
 pub use uuid::Uuid;
+pub use zipher::components::aes_gcm_siv::*;
+pub use zipher::components::argon2::*;

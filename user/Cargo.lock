@@ -100,7 +100,6 @@ dependencies = [
  "kenzu 0.1.7",
  "nekoprint",
  "nekosearch",
- "nekotracing",
  "regex",
  "serde",
  "serde_json",
@@ -720,20 +719,6 @@ checksum = "72a8737a7e51c51e4043821bb0707ac35fa3a79f3c8e5129a625bc2cf40dcb04"
 dependencies = [
  "kenzu 0.0.9",
  "rphonetic",
-]
-
-[[package]]
-name = "nekotracing"
-version = "0.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3b2a552e6f08c06cc0e9e8a8ffa7a04b025c34a56a5d4cd7a26622bba5eee9b"
-dependencies = [
- "chrono",
- "colorful",
- "proc-macro2",
- "quote",
- "syn",
- "tokio",
 ]
 
 [[package]]

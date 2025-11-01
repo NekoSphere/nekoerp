@@ -1,6 +1,6 @@
 pub use super::prelude::*;
 
-#[derive(Builder, NekoPrint, Debug, Clone)]
+#[derive(Builder, NekoPrint, Debug, Clone, Serialize, Deserialize)]
 #[transporter(async fn trans() { transporter(message).await; })]
 pub struct UserReponse {
     pub uuid: Uuid,
@@ -23,6 +23,34 @@ pub struct UserReponse {
         default = AVATAR_DEFAULT
     )]
     pub avatar: String,
-    pub token: String,
     pub policies: Policies,
+    pub modules: Modules,
+}
+
+impl From<User> for UserReponse {
+    fn from(u: User) -> Self {
+        UserReponse {
+            uuid: u.uuid,
+            email: u.email,
+            name: u.name,
+            birthday: u.birthday,
+            avatar: u.avatar,
+            policies: u.policies,
+            modules: u.modules,
+        }
+    }
+}
+
+impl From<&User> for UserReponse {
+    fn from(u: &User) -> Self {
+        UserReponse {
+            uuid: u.uuid,
+            email: u.email.clone(),
+            name: u.name.clone(),
+            birthday: u.birthday,
+            avatar: u.avatar.clone(),
+            policies: u.policies.clone(),
+            modules: u.modules.clone(),
+        }
+    }
 }

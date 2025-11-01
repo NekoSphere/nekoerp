@@ -12,10 +12,9 @@ chrono = { version = "0", features = ["serde"]}
 colorful = "0.3.2"
 dotenv = "0.15.0"
 hex = "0"
-kenzu = "0.1.5"
+kenzu = "0.1"
 nekoprint = "0"
 nekosearch = "0"
-nekotracing = "0"
 regex = "1"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1"
